@@ -1,0 +1,56 @@
+pipeline {
+    agent any
+    
+    tools {
+        maven 'mymaven'
+    }
+    
+    environment {
+        IMAGE_NAME = 'myproject1'  // Variable for Docker image name
+        DOCKER_TAG = "${IMAGE_NAME}:${BUILD_NUMBER}" // Tag the image with the build number
+    }
+
+    stages {
+        stage('Clone Repo') {
+            steps {
+                // Clone the repository from GitHub
+                git 'https://github.com/Sonal0409/banking-finance-Project1.git'
+            }
+        }
+
+        stage('Test Code') {
+            steps {
+                // Run Maven tests
+                sh 'mvn test'
+            }
+        }
+
+        stage('Build Code') {
+            steps {
+                // Clean and build the project
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                // Build the Docker image with the specified tag
+                sh "docker build -t ${DOCKER_TAG} ."
+            }
+        }
+
+        stage('Deploy the Image') {
+            steps {
+                // Deploy the Docker container with explicit port mapping
+                sh "docker run -d -p 8080:8080 ${DOCKER_TAG}"
+            }
+        }
+    }
+
+    post {
+        success {
+            // Optionally push the image to a Docker registry (like Docker Hub or AWS ECR)
+            // sh "docker push ${DOCKER_TAG}"
+        }
+        failure {
+            echo 'Build failed! C
